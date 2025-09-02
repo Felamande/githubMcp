@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Felamande/githubMcp/model"
 	"github.com/google/go-github/v74/github"
@@ -128,4 +129,47 @@ func (c *GithubClient) ListReleases(opt model.ReleaseListOption) (*model.Release
 	}
 
 	return releasesResult, nil
+}
+
+func (c *GithubClient) GetReadme(opt model.ReadmeOption) (*model.ReadmeResult, error) {
+	if opt.StartLine == 0 {
+		opt.StartLine = 1
+	}
+
+	ctx := context.Background()
+	readme, _, err := c.c.Repositories.GetReadme(ctx, opt.Owner, opt.Repository, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := readme.GetContent()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(content, "\n")
+	totalLines := len(lines)
+
+	if opt.EndLine == 0 || opt.EndLine > totalLines {
+		opt.EndLine = totalLines
+	}
+
+	if opt.StartLine < 1 {
+		opt.StartLine = 1
+	}
+	if opt.EndLine < opt.StartLine {
+		opt.EndLine = opt.StartLine
+	}
+
+	selectedLines := lines[opt.StartLine-1 : opt.EndLine]
+	selectedContent := strings.Join(selectedLines, "\n")
+
+	result := &model.ReadmeResult{
+		Content:    selectedContent,
+		StartLine:  opt.StartLine,
+		EndLine:    opt.EndLine,
+		TotalLines: totalLines,
+	}
+
+	return result, nil
 }

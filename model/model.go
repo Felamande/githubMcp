@@ -56,3 +56,17 @@ type ReleaseInfo struct {
 	PublishedAt  string
 	AssetsNum    int
 }
+
+type ReadmeOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	StartLine  int    `json:"start_line" jsonschema:"description=starting line number (1-based), default to 1"`
+	EndLine    int    `json:"end_line" jsonschema:"description=ending line number, default to all lines"`
+}
+
+type ReadmeResult struct {
+	Content   string
+	StartLine int
+	EndLine   int
+	TotalLines int
+}

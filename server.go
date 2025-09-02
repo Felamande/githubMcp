@@ -36,6 +36,23 @@ func main() {
 			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
 		},
 	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("get_readme", "get readme of the repository from start line to end line",
+		func(opt model.ReadmeOption) (*mcpgo.ToolResponse, error) {
+			readme, err := client.GetReadme(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(readme)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	err = server.Serve()
 	if err != nil {

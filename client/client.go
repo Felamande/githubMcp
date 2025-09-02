@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -387,6 +388,65 @@ func (c *GithubClient) ListDirectory(opt model.DirectoryListOption) (*model.Dire
 			Type:     content.GetType(),
 			Encoding: content.GetEncoding(),
 		})
+	}
+
+	return result, nil
+}
+
+func (c *GithubClient) ReadFile(opt model.ReadFileOption) (*model.ReadFileResult, error) {
+	if opt.StartLine == 0 {
+		opt.StartLine = 1
+	}
+
+	ctx := context.Background()
+	
+	// Set up options with ref if provided
+	contentGetOptions := (*github.RepositoryContentGetOptions)(nil)
+	if opt.Ref != "" {
+		contentGetOptions = &github.RepositoryContentGetOptions{
+			Ref: opt.Ref,
+		}
+	}
+
+	// Get file contents
+	fileContent, _, _, err := c.c.Repositories.GetContents(ctx, opt.Owner, opt.Repository, opt.Path, contentGetOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if it's a directory
+	if fileContent.GetType() != "file" {
+		return nil, fmt.Errorf("path is not a file: %s", opt.Path)
+	}
+
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(content, "\n")
+	totalLines := len(lines)
+
+	if opt.EndLine == 0 || opt.EndLine > totalLines {
+		opt.EndLine = totalLines
+	}
+
+	if opt.StartLine < 1 {
+		opt.StartLine = 1
+	}
+	if opt.EndLine < opt.StartLine {
+		opt.EndLine = opt.StartLine
+	}
+
+	selectedLines := lines[opt.StartLine-1 : opt.EndLine]
+	selectedContent := strings.Join(selectedLines, "\n")
+
+	result := &model.ReadFileResult{
+		Content:    selectedContent,
+		StartLine:  opt.StartLine,
+		EndLine:    opt.EndLine,
+		TotalLines: totalLines,
+		Encoding:   fileContent.GetEncoding(),
 	}
 
 	return result, nil

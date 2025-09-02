@@ -160,3 +160,20 @@ type DirectoryOrFileInfo struct {
 	Type     string
 	Encoding string
 }
+
+type ReadFileOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	Path       string `json:"path" jsonschema:"required,description=file path to read"`
+	Ref        string `json:"ref" jsonschema:"description=the name of the commit/branch/tag, default uses repository's default branch"`
+	StartLine  int    `json:"start_line" jsonschema:"description=starting line number (1-based), default to 1"`
+	EndLine    int    `json:"end_line" jsonschema:"description=ending line number, default to all lines"`
+}
+
+type ReadFileResult struct {
+	Content    string
+	StartLine  int
+	EndLine    int
+	TotalLines int
+	Encoding   string
+}

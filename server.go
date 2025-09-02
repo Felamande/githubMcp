@@ -54,6 +54,20 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("get_repository_tags", "list tags of the repository",
+		func(opt model.TagListOption) (*mcpgo.ToolResponse, error) {
+			tags, err := client.ListTags(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(tags)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

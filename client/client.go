@@ -179,3 +179,44 @@ func (c *GithubClient) GetReadme(opt model.ReadmeOption) (*model.ReadmeResult, e
 
 	return result, nil
 }
+
+func (c *GithubClient) ListTags(opt model.TagListOption) (*model.TagListResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.ListOptions{
+		PerPage: opt.ResultPerpage,
+		Page:    opt.Page,
+	}
+	tags, resp, err := c.c.Repositories.ListTags(ctx, opt.Owner, opt.Repository, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var tagInfos []model.TagInfo
+	for _, tag := range tags {
+		tagResult := model.TagInfo{
+			Name:       tag.GetName(),
+			ZipballURL: tag.GetZipballURL(),
+			TarballURL: tag.GetTarballURL(),
+		}
+		if commit := tag.GetCommit(); commit != nil {
+			tagResult.CommitSHA = commit.GetSHA()
+		}
+
+		tagInfos = append(tagInfos, tagResult)
+	}
+
+	result := &model.TagListResult{
+		NextPage: resp.NextPage,
+		LastPage: resp.LastPage,
+		Tags:     tagInfos,
+	}
+
+	return result, nil
+}

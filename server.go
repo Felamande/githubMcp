@@ -166,6 +166,20 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("search_code", "search code across GitHub repositories",
+		func(opt model.SearchCodeOption) (*mcpgo.ToolResponse, error) {
+			codeResults, err := client.SearchCode(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(codeResults)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

@@ -197,3 +197,40 @@ type FindTagsResult struct {
 type FindBranchesResult struct {
 	Branches []BranchInfo
 }
+
+type SearchCodeOption struct {
+	Query         string `json:"query" jsonschema:"required,description=the github code search query string"`
+	Sort          string `json:"sort" jsonschema:"description=sort default by best match, can be [indexed] for code search"`
+	Order         string `json:"order" jsonschema:"description=sort order default by desc, can be [desc|asc]"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number of the search result,start from 1 and default to 1"`
+}
+
+type SearchCodeResult struct {
+	TotalCount int
+	NextPage   int
+	LastPage   int
+	CodeFiles  []CodeFileInfo
+}
+
+type CodeFileInfo struct {
+	Name        string
+	Path        string
+	Repository  string
+	Owner       string
+	HTMLURL     string
+	TextMatches []TextMatch
+}
+
+type TextMatch struct {
+	Fragment   string
+	Matches    []MatchDetail
+	ObjectType string
+	ObjectURL  string
+	Property   string
+}
+
+type MatchDetail struct {
+	Indices []int
+	Text    string
+}

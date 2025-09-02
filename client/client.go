@@ -527,3 +527,69 @@ func (c *GithubClient) FindBranches(opt model.FindBranchesOption) (*model.FindBr
 
 	return result, nil
 }
+
+func (c *GithubClient) SearchCode(opt model.SearchCodeOption) (*model.SearchCodeResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.SearchOptions{
+		Sort:  opt.Sort,
+		Order: opt.Order,
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+		TextMatch: true, // Enable text matches for highlighting
+	}
+
+	result, resp, err := c.c.Search.Code(ctx, opt.Query, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	searchResult := &model.SearchCodeResult{
+		TotalCount: result.GetTotal(),
+		NextPage:   resp.NextPage,
+		LastPage:   resp.LastPage,
+		CodeFiles:  make([]model.CodeFileInfo, 0),
+	}
+
+	for _, codeResult := range result.CodeResults {
+		codeFile := model.CodeFileInfo{
+			Name:       codeResult.GetName(),
+			Path:       codeResult.GetPath(),
+			Repository: codeResult.Repository.GetName(),
+			Owner:      codeResult.Repository.GetOwner().GetLogin(),
+			HTMLURL:    codeResult.GetHTMLURL(),
+		}
+
+		// Process text matches for highlighting
+		for _, textMatch := range codeResult.TextMatches {
+			match := model.TextMatch{
+				Fragment:   textMatch.GetFragment(),
+				ObjectType: textMatch.GetObjectType(),
+				ObjectURL:  textMatch.GetObjectURL(),
+				Property:   textMatch.GetProperty(),
+			}
+
+			for _, m := range textMatch.Matches {
+				matchDetail := model.MatchDetail{
+					Indices: m.Indices,
+					Text:    m.GetText(),
+				}
+				match.Matches = append(match.Matches, matchDetail)
+			}
+
+			codeFile.TextMatches = append(codeFile.TextMatches, match)
+		}
+
+		searchResult.CodeFiles = append(searchResult.CodeFiles, codeFile)
+	}
+
+	return searchResult, nil
+}

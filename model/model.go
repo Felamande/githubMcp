@@ -299,6 +299,12 @@ type IssueInfo struct {
 	Comments  int
 }
 
+type IssueCommentsResult struct {
+	NextPage int
+	LastPage int
+	Comments []IssueCommentInfo
+}
+
 type IssueCommentInfo struct {
 	ID        int64
 	Body      string
@@ -307,6 +313,12 @@ type IssueCommentInfo struct {
 	UpdatedAt string
 	URL       string
 	HTMLURL   string
+}
+
+type LableListResult struct {
+	NextPage int
+	LastPage int
+	Labels   []LabelInfo
 }
 
 type LabelInfo struct {

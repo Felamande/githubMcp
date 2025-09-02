@@ -770,13 +770,15 @@ func (c *GithubClient) SearchIssues(opt model.SearchIssuesOption) (*model.Issues
 	return searchResult, nil
 }
 
-func (c *GithubClient) ListIssueComments(opt model.ListIssueCommentsOption) ([]model.IssueCommentInfo, error) {
+func (c *GithubClient) ListIssueComments(opt model.ListIssueCommentsOption) (*model.IssueCommentsResult, error) {
 	if opt.ResultPerpage == 0 {
 		opt.ResultPerpage = 10
 	}
 	if opt.Page == 0 {
 		opt.Page = 1
 	}
+	commentsResult := &model.IssueCommentsResult{}
+	commentsResult.Comments = make([]model.IssueCommentInfo, 0)
 
 	ctx := context.Background()
 	opts := &github.IssueListCommentsOptions{
@@ -792,10 +794,12 @@ func (c *GithubClient) ListIssueComments(opt model.ListIssueCommentsOption) ([]m
 		}
 	}
 
-	comments, _, err := c.c.Issues.ListComments(ctx, opt.Owner, opt.Repository, opt.IssueNumber, opts)
+	comments, resp, err := c.c.Issues.ListComments(ctx, opt.Owner, opt.Repository, opt.IssueNumber, opts)
 	if err != nil {
 		return nil, err
 	}
+	commentsResult.NextPage = resp.NextPage
+	commentsResult.LastPage = resp.LastPage
 
 	var commentInfos []model.IssueCommentInfo
 	for _, comment := range comments {
@@ -814,11 +818,12 @@ func (c *GithubClient) ListIssueComments(opt model.ListIssueCommentsOption) ([]m
 
 		commentInfos = append(commentInfos, commentInfo)
 	}
+	commentsResult.Comments = commentInfos
 
-	return commentInfos, nil
+	return commentsResult, nil
 }
 
-func (c *GithubClient) ListIssueLabels(opt model.ListIssueLabelsOption) ([]model.LabelInfo, error) {
+func (c *GithubClient) ListIssueLabels(opt model.ListIssueLabelsOption) (*model.LableListResult, error) {
 	if opt.ResultPerpage == 0 {
 		opt.ResultPerpage = 10
 	}
@@ -832,9 +837,13 @@ func (c *GithubClient) ListIssueLabels(opt model.ListIssueLabelsOption) ([]model
 		Page:    opt.Page,
 	}
 
-	labels, _, err := c.c.Issues.ListLabels(ctx, opt.Owner, opt.Repository, opts)
+	labels, resp, err := c.c.Issues.ListLabels(ctx, opt.Owner, opt.Repository, opts)
 	if err != nil {
 		return nil, err
+	}
+	lableListResult := &model.LableListResult{
+		NextPage: resp.NextPage,
+		LastPage: resp.LastPage,
 	}
 
 	var labelInfos []model.LabelInfo
@@ -846,8 +855,9 @@ func (c *GithubClient) ListIssueLabels(opt model.ListIssueLabelsOption) ([]model
 		}
 		labelInfos = append(labelInfos, labelInfo)
 	}
+	lableListResult.Labels = labelInfos
 
-	return labelInfos, nil
+	return lableListResult, nil
 }
 
 func (c *GithubClient) ListPullRequests(opt model.ListPROption) (*model.PRListResult, error) {

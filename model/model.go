@@ -1,11 +1,12 @@
 package model
 
 type SearchOption struct {
-	Query         string `json:"query" jsonschema:"reqiured,description=the github repository search query string"`
-	Sort          string `json:"sort" jsonschema:"description=sort default by best match, can be [stars|fork|updated] for repository search"`
-	Order         string `json:"order" jsonschema:"description=sort order default by desc, can be [desc|asc]"`
-	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
-	Page          int    `json:"page" jsonschema:"description=current page number of the search result,start from 1 and default to 1"`
+	Query                   string `json:"query" jsonschema:"reqiured,description=the github repository search query string"`
+	Sort                    string `json:"sort" jsonschema:"description=sort default by best match, can be [stars|fork|updated] for repository search"`
+	Order                   string `json:"order" jsonschema:"description=sort order default by desc, can be [desc|asc]"`
+	ResultPerpage           int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page                    int    `json:"page" jsonschema:"description=current page number of the search result,start from 1 and default to 1"`
+	DescriptionTruncateSize int    `json:"description_truncate_size" jsonschema:"description=size of truncating very long release description, default for 1024"`
 }
 
 type SearchResult struct {
@@ -16,18 +17,18 @@ type SearchResult struct {
 }
 
 type RepositoryInfo struct {
-	Owner           *string
-	Name            *string
-	Organization    *string
-	FullName        *string
-	MasterBranch    *string
-	Description     *string
-	StargazersCount *int
-	ForksCount      *int
-	Language        *string
+	Owner           string
+	Name            string
+	Organization    string
+	FullName        string
+	MasterBranch    string
+	Description     string
+	StargazersCount int
+	ForksCount      int
+	Language        string
 	CreatedAt       string
 	UpdatedAt       string
-	Archived        *bool
+	Archived        bool
 }
 
 type ReleaseListOption struct {

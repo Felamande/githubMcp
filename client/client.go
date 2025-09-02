@@ -25,6 +25,10 @@ func (c *GithubClient) GetRepository(opt model.SearchOption) (r *model.SearchRes
 		opt.Page = 1
 	}
 
+	if opt.DescriptionTruncateSize == 0 {
+		opt.DescriptionTruncateSize = 1024
+	}
+
 	ctx := context.Background()
 	opts := &github.SearchOptions{
 		Sort:  opt.Sort,  // 按星标数排序
@@ -46,26 +50,26 @@ func (c *GithubClient) GetRepository(opt model.SearchOption) (r *model.SearchRes
 	searches.NextPage = resp.NextPage
 
 	for _, repo := range result.Repositories {
-
+		descLen := len(repo.GetDescription())
+		if opt.DescriptionTruncateSize >= descLen {
+			opt.DescriptionTruncateSize = descLen
+		}
 		repoInfo := model.RepositoryInfo{
-			Name:            repo.Name,
-			FullName:        repo.FullName,
-			MasterBranch:    repo.MasterBranch,
-			Description:     repo.Description,
-			StargazersCount: repo.StargazersCount,
-			ForksCount:      repo.ForksCount,
-			Language:        repo.Language,
-			Archived:        repo.Archived,
+			Name:            repo.GetName(),
+			FullName:        repo.GetFullName(),
+			MasterBranch:    repo.GetMasterBranch(),
+			Description:     repo.GetDescription()[0:opt.DescriptionTruncateSize],
+			StargazersCount: repo.GetStargazersCount(),
+			ForksCount:      repo.GetForksCount(),
+			Language:        repo.GetLanguage(),
+			Archived:        repo.GetArchived(),
 		}
-		if repo.Description != nil && len(*repo.Description) > 1024 {
-			strShort := (*repo.Description)[:1024] + "......"
-			repoInfo.Description = &strShort
-		}
+
 		if repo.Owner != nil {
-			repoInfo.Owner = repo.Owner.Name
+			repoInfo.Owner = repo.Owner.GetName()
 		}
 		if repo.Organization != nil {
-			repoInfo.Organization = repo.Organization.Company
+			repoInfo.Organization = repo.Organization.GetCompany()
 		}
 		if repo.CreatedAt != nil {
 			repoInfo.CreatedAt = repo.CreatedAt.Format("2006-01-02 15:04:05")

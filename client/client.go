@@ -137,7 +137,13 @@ func (c *GithubClient) GetReadme(opt model.ReadmeOption) (*model.ReadmeResult, e
 	}
 
 	ctx := context.Background()
-	readme, _, err := c.c.Repositories.GetReadme(ctx, opt.Owner, opt.Repository, nil)
+	contentGetOptions := (*github.RepositoryContentGetOptions)(nil)
+	if opt.Ref != "" {
+		contentGetOptions = &github.RepositoryContentGetOptions{
+			Ref: opt.Ref,
+		}
+	}
+	readme, _, err := c.c.Repositories.GetReadme(ctx, opt.Owner, opt.Repository, contentGetOptions)
 	if err != nil {
 		return nil, err
 	}

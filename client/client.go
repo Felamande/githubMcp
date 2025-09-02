@@ -607,12 +607,12 @@ func (c *GithubClient) ListIssues(opt model.ListIssuesOption) (*model.IssuesList
 
 	ctx := context.Background()
 	opts := &github.IssueListByRepoOptions{
-		State:       opt.State,
-		Labels:      opt.Labels,
-		Assignee:    opt.Assignee,
-		Creator:     opt.Creator,
-		Mentioned:   opt.Mentioned,
-		Milestone:   opt.Milestone,
+		State:     opt.State,
+		Labels:    opt.Labels,
+		Assignee:  opt.Assignee,
+		Creator:   opt.Creator,
+		Mentioned: opt.Mentioned,
+		Milestone: opt.Milestone,
 		ListOptions: github.ListOptions{
 			PerPage: opt.ResultPerpage,
 			Page:    opt.Page,
@@ -880,4 +880,334 @@ func (c *GithubClient) ListIssueLabels(opt model.ListIssueLabelsOption) ([]model
 	}
 
 	return labelInfos, nil
+}
+
+func (c *GithubClient) ListPullRequests(opt model.ListPROption) (*model.PRListResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+	if opt.State == "" {
+		opt.State = "open"
+	}
+
+	ctx := context.Background()
+	opts := &github.PullRequestListOptions{
+		State:     opt.State,
+		Head:      opt.Head,
+		Base:      opt.Base,
+		Sort:      opt.Sort,
+		Direction: opt.Direction,
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+	}
+
+	prs, resp, err := c.c.PullRequests.List(ctx, opt.Owner, opt.Repository, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &model.PRListResult{
+		TotalCount: len(prs),
+		NextPage:   resp.NextPage,
+		LastPage:   resp.LastPage,
+		PRs:        make([]model.PRInfo, 0),
+	}
+
+	for _, pr := range prs {
+		prInfo := model.PRInfo{
+			Number:         pr.GetNumber(),
+			Title:          pr.GetTitle(),
+			State:          pr.GetState(),
+			Body:           pr.GetBody(),
+			Comments:       pr.GetComments(),
+			Additions:      pr.GetAdditions(),
+			Deletions:      pr.GetDeletions(),
+			ChangedFiles:   pr.GetChangedFiles(),
+			Mergeable:      pr.GetMergeable(),
+			MergeableState: pr.GetMergeableState(),
+			Merged:         pr.GetMerged(),
+			BaseRef:        pr.Base.GetRef(),
+			HeadRef:        pr.Head.GetRef(),
+			Draft:          pr.GetDraft(),
+			ReviewComments: pr.GetReviewComments(),
+			Commits:        pr.GetCommits(),
+			CreatedAt:      pr.GetCreatedAt().Format(time.RFC3339),
+			UpdatedAt:      pr.GetUpdatedAt().Format(time.RFC3339),
+			URL:            pr.GetURL(),
+			HTMLURL:        pr.GetHTMLURL(),
+		}
+
+		if pr.ClosedAt != nil {
+			prInfo.ClosedAt = pr.ClosedAt.Format(time.RFC3339)
+		}
+		if pr.MergedAt != nil {
+			prInfo.MergedAt = pr.MergedAt.Format(time.RFC3339)
+		}
+
+		// Process labels
+		for _, label := range pr.Labels {
+			prInfo.Labels = append(prInfo.Labels, model.LabelInfo{
+				Name:        label.GetName(),
+				Color:       label.GetColor(),
+				Description: label.GetDescription(),
+			})
+		}
+
+		// Process assignee
+		if pr.Assignee != nil {
+			prInfo.Assignee = &model.UserInfo{
+				Login:     pr.Assignee.GetLogin(),
+				ID:        pr.Assignee.GetID(),
+				AvatarURL: pr.Assignee.GetAvatarURL(),
+				HTMLURL:   pr.Assignee.GetHTMLURL(),
+				Type:      pr.Assignee.GetType(),
+			}
+		}
+
+		// Process assignees
+		for _, assignee := range pr.Assignees {
+			prInfo.Assignees = append(prInfo.Assignees, model.UserInfo{
+				Login:     assignee.GetLogin(),
+				ID:        assignee.GetID(),
+				AvatarURL: assignee.GetAvatarURL(),
+				HTMLURL:   assignee.GetHTMLURL(),
+				Type:      assignee.GetType(),
+			})
+		}
+
+		// Process requested reviewers
+		for _, reviewer := range pr.RequestedReviewers {
+			prInfo.RequestedReviewers = append(prInfo.RequestedReviewers, model.UserInfo{
+				Login:     reviewer.GetLogin(),
+				ID:        reviewer.GetID(),
+				AvatarURL: reviewer.GetAvatarURL(),
+				HTMLURL:   reviewer.GetHTMLURL(),
+				Type:      reviewer.GetType(),
+			})
+		}
+
+		// Process creator
+		if pr.User != nil {
+			prInfo.Creator = model.UserInfo{
+				Login:     pr.User.GetLogin(),
+				ID:        pr.User.GetID(),
+				AvatarURL: pr.User.GetAvatarURL(),
+				HTMLURL:   pr.User.GetHTMLURL(),
+				Type:      pr.User.GetType(),
+			}
+		}
+
+		// Process milestone
+		if pr.Milestone != nil {
+			prInfo.Milestone = &model.MilestoneInfo{
+				Number:      pr.Milestone.GetNumber(),
+				Title:       pr.Milestone.GetTitle(),
+				Description: pr.Milestone.GetDescription(),
+				State:       pr.Milestone.GetState(),
+			}
+			if pr.Milestone.DueOn != nil {
+				prInfo.Milestone.DueOn = pr.Milestone.DueOn.Format(time.RFC3339)
+			}
+		}
+
+		result.PRs = append(result.PRs, prInfo)
+	}
+
+	return result, nil
+}
+
+func (c *GithubClient) GetPullRequest(opt model.GetPROption) (*model.PRInfo, error) {
+	ctx := context.Background()
+
+	pr, _, err := c.c.PullRequests.Get(ctx, opt.Owner, opt.Repository, opt.Number)
+	if err != nil {
+		return nil, err
+	}
+
+	prInfo := &model.PRInfo{
+		Number:         pr.GetNumber(),
+		Title:          pr.GetTitle(),
+		State:          pr.GetState(),
+		Body:           pr.GetBody(),
+		Comments:       pr.GetComments(),
+		Additions:      pr.GetAdditions(),
+		Deletions:      pr.GetDeletions(),
+		ChangedFiles:   pr.GetChangedFiles(),
+		Mergeable:      pr.GetMergeable(),
+		MergeableState: pr.GetMergeableState(),
+		Merged:         pr.GetMerged(),
+		BaseRef:        pr.Base.GetRef(),
+		HeadRef:        pr.Head.GetRef(),
+		Draft:          pr.GetDraft(),
+		ReviewComments: pr.GetReviewComments(),
+		Commits:        pr.GetCommits(),
+		CreatedAt:      pr.GetCreatedAt().Format(time.RFC3339),
+		UpdatedAt:      pr.GetUpdatedAt().Format(time.RFC3339),
+		URL:            pr.GetURL(),
+		HTMLURL:        pr.GetHTMLURL(),
+	}
+
+	if pr.ClosedAt != nil {
+		prInfo.ClosedAt = pr.ClosedAt.Format(time.RFC3339)
+	}
+	if pr.MergedAt != nil {
+		prInfo.MergedAt = pr.MergedAt.Format(time.RFC3339)
+	}
+
+	// Process labels
+	for _, label := range pr.Labels {
+		prInfo.Labels = append(prInfo.Labels, model.LabelInfo{
+			Name:        label.GetName(),
+			Color:       label.GetColor(),
+			Description: label.GetDescription(),
+		})
+	}
+
+	// Process assignee
+	if pr.Assignee != nil {
+		prInfo.Assignee = &model.UserInfo{
+			Login:     pr.Assignee.GetLogin(),
+			ID:        pr.Assignee.GetID(),
+			AvatarURL: pr.Assignee.GetAvatarURL(),
+			HTMLURL:   pr.Assignee.GetHTMLURL(),
+			Type:      pr.Assignee.GetType(),
+		}
+	}
+
+	// Process assignees
+	for _, assignee := range pr.Assignees {
+		prInfo.Assignees = append(prInfo.Assignees, model.UserInfo{
+			Login:     assignee.GetLogin(),
+			ID:        assignee.GetID(),
+			AvatarURL: assignee.GetAvatarURL(),
+			HTMLURL:   assignee.GetHTMLURL(),
+			Type:      assignee.GetType(),
+		})
+	}
+
+	// Process requested reviewers
+	for _, reviewer := range pr.RequestedReviewers {
+		prInfo.RequestedReviewers = append(prInfo.RequestedReviewers, model.UserInfo{
+			Login:     reviewer.GetLogin(),
+			ID:        reviewer.GetID(),
+			AvatarURL: reviewer.GetAvatarURL(),
+			HTMLURL:   reviewer.GetHTMLURL(),
+			Type:      reviewer.GetType(),
+		})
+	}
+
+	// Process creator
+	if pr.User != nil {
+		prInfo.Creator = model.UserInfo{
+			Login:     pr.User.GetLogin(),
+			ID:        pr.User.GetID(),
+			AvatarURL: pr.User.GetAvatarURL(),
+			HTMLURL:   pr.User.GetHTMLURL(),
+			Type:      pr.User.GetType(),
+		}
+	}
+
+	// Process milestone
+	if pr.Milestone != nil {
+		prInfo.Milestone = &model.MilestoneInfo{
+			Number:      pr.Milestone.GetNumber(),
+			Title:       pr.Milestone.GetTitle(),
+			Description: pr.Milestone.GetDescription(),
+			State:       pr.Milestone.GetState(),
+		}
+		if pr.Milestone.DueOn != nil {
+			prInfo.Milestone.DueOn = pr.Milestone.DueOn.Format(time.RFC3339)
+		}
+	}
+
+	return prInfo, nil
+}
+
+func (c *GithubClient) SearchPullRequests(opt model.SearchPROption) (*model.PRListResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.SearchOptions{
+		Sort:  opt.Sort,
+		Order: opt.Order,
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+	}
+
+	// GitHub search API uses "is:pr" to filter for pull requests specifically
+	searchQuery := "is:pr " + opt.Query
+	result, resp, err := c.c.Search.Issues(ctx, searchQuery, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	searchResult := &model.PRListResult{
+		TotalCount: result.GetTotal(),
+		NextPage:   resp.NextPage,
+		LastPage:   resp.LastPage,
+		PRs:        make([]model.PRInfo, 0),
+	}
+
+	for _, issue := range result.Issues {
+		if !issue.IsPullRequest() {
+			continue // Should not happen with "is:pr" filter, but just in case
+		}
+
+		prInfo := model.PRInfo{
+			Number:    issue.GetNumber(),
+			Title:     issue.GetTitle(),
+			State:     issue.GetState(),
+			Body:      issue.GetBody(),
+			Comments:  issue.GetComments(),
+			CreatedAt: issue.GetCreatedAt().Format(time.RFC3339),
+			UpdatedAt: issue.GetUpdatedAt().Format(time.RFC3339),
+			URL:       issue.GetURL(),
+			HTMLURL:   issue.GetHTMLURL(),
+			Merged:    issue.GetState() == "closed" && strings.Contains(strings.ToLower(issue.GetTitle()), "merge"), // Heuristic for merged status
+		}
+
+		if issue.ClosedAt != nil {
+			prInfo.ClosedAt = issue.ClosedAt.Format(time.RFC3339)
+		}
+		// GitHub Issue search results don't have MergedAt field, use ClosedAt as approximation
+		if issue.ClosedAt != nil && prInfo.Merged {
+			prInfo.MergedAt = issue.ClosedAt.Format(time.RFC3339)
+		}
+
+		// Process labels
+		for _, label := range issue.Labels {
+			prInfo.Labels = append(prInfo.Labels, model.LabelInfo{
+				Name:        label.GetName(),
+				Color:       label.GetColor(),
+				Description: label.GetDescription(),
+			})
+		}
+
+		// Process creator
+		if issue.User != nil {
+			prInfo.Creator = model.UserInfo{
+				Login:     issue.User.GetLogin(),
+				ID:        issue.User.GetID(),
+				AvatarURL: issue.User.GetAvatarURL(),
+				HTMLURL:   issue.User.GetHTMLURL(),
+				Type:      issue.User.GetType(),
+			}
+		}
+
+		searchResult.PRs = append(searchResult.PRs, prInfo)
+	}
+
+	return searchResult, nil
 }

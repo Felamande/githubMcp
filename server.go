@@ -236,6 +236,48 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("list_pull_requests", "list repository pull requests with filtering",
+		func(opt model.ListPROption) (*mcpgo.ToolResponse, error) {
+			prs, err := client.ListPullRequests(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(prs)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("get_pull_request", "get detailed information about a specific pull request",
+		func(opt model.GetPROption) (*mcpgo.ToolResponse, error) {
+			pr, err := client.GetPullRequest(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(pr)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("search_pull_requests", "search pull requests across GitHub",
+		func(opt model.SearchPROption) (*mcpgo.ToolResponse, error) {
+			prs, err := client.SearchPullRequests(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(prs)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

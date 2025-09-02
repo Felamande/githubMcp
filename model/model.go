@@ -329,3 +329,67 @@ type MilestoneInfo struct {
 	State       string
 	DueOn       string
 }
+
+type ListPROption struct {
+	Owner         string   `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository    string   `json:"repository" jsonschema:"required,description=name of the repository"`
+	State         string   `json:"state" jsonschema:"description=filter by PR state: open, closed, or all"`
+	Head          string   `json:"head" jsonschema:"description=filter by head branch or user:branch"`
+	Base          string   `json:"base" jsonschema:"description=filter by base branch name"`
+	Sort          string   `json:"sort" jsonschema:"description=sort by: created, updated, popularity, long-running"`
+	Direction     string   `json:"direction" jsonschema:"description=sort direction: asc or desc"`
+	ResultPerpage int      `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int      `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
+}
+
+type GetPROption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	Number     int    `json:"number" jsonschema:"required,description=the pull request number"`
+}
+
+type SearchPROption struct {
+	Query         string `json:"query" jsonschema:"required,description=github pull request search query"`
+	Sort          string `json:"sort" jsonschema:"description=sort by: created, updated, comments"`
+	Order         string `json:"order" jsonschema:"description=sort order: asc or desc"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
+}
+
+type PRListResult struct {
+	TotalCount int
+	NextPage   int
+	LastPage   int
+	PRs        []PRInfo
+}
+
+type PRInfo struct {
+	Number          int
+	Title           string
+	State           string
+	Body            string
+	Labels          []LabelInfo
+	Assignee        *UserInfo
+	Assignees       []UserInfo
+	RequestedReviewers []UserInfo
+	Milestone       *MilestoneInfo
+	Creator         UserInfo
+	CreatedAt       string
+	UpdatedAt       string
+	ClosedAt        string
+	MergedAt        string
+	URL             string
+	HTMLURL         string
+	Comments        int
+	Additions       int
+	Deletions       int
+	ChangedFiles    int
+	Mergeable       bool
+	MergeableState  string
+	Merged          bool
+	BaseRef         string
+	HeadRef         string
+	Draft           bool
+	ReviewComments  int
+	Commits         int
+}

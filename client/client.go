@@ -312,3 +312,82 @@ func (c *GithubClient) GetCommitBySHA(opt model.CommitBySHAOption) (*model.Commi
 
 	return commitInfo, nil
 }
+
+func (c *GithubClient) ListBranches(opt model.BranchListOption) (*model.BranchListResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.BranchListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+	}
+
+	branches, resp, err := c.c.Repositories.ListBranches(ctx, opt.Owner, opt.Repository, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var branchInfos []model.BranchInfo
+	for _, branch := range branches {
+		branchInfo := model.BranchInfo{
+			Name:      branch.GetName(),
+			Protected: branch.GetProtected(),
+		}
+
+		if commit := branch.GetCommit(); commit != nil {
+			branchInfo.CommitSHA = commit.GetSHA()
+		}
+
+		branchInfos = append(branchInfos, branchInfo)
+	}
+
+	result := &model.BranchListResult{
+		NextPage: resp.NextPage,
+		LastPage: resp.LastPage,
+		Branches: branchInfos,
+	}
+
+	return result, nil
+}
+
+func (c *GithubClient) ListDirectory(opt model.DirectoryListOption) (*model.DirectoryListResult, error) {
+	ctx := context.Background()
+
+	// Set up options with ref if provided
+	contentGetOptions := (*github.RepositoryContentGetOptions)(nil)
+	if opt.Ref != "" {
+		contentGetOptions = &github.RepositoryContentGetOptions{
+			Ref: opt.Ref,
+		}
+	}
+
+	// Get directory contents
+	_, directoryContents, _, err := c.c.Repositories.GetContents(ctx, opt.Owner, opt.Repository, opt.Path, contentGetOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &model.DirectoryListResult{
+		Infos: []model.DirectoryOrFileInfo{},
+	}
+
+	// Process directory contents
+	for _, content := range directoryContents {
+		result.Infos = append(result.Infos, model.DirectoryOrFileInfo{
+			Name:     content.GetName(),
+			Path:     content.GetPath(),
+			Size:     int64(content.GetSize()),
+			Type:     content.GetType(),
+			Encoding: content.GetEncoding(),
+		})
+	}
+
+	return result, nil
+}

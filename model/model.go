@@ -122,3 +122,41 @@ type CommitBySHAOption struct {
 	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
 	SHA        string `json:"sha" jsonschema:"required,description=the SHA hash of the commit"`
 }
+
+type BranchListOption struct {
+	Owner         string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository    string `json:"repository" jsonschema:"required,description=name of the repository"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number of the search result,start from 1 and default to 1"`
+}
+
+type BranchListResult struct {
+	NextPage int
+	LastPage int
+	Branches []BranchInfo
+}
+
+type BranchInfo struct {
+	Name      string
+	CommitSHA string
+	Protected bool
+}
+
+type DirectoryListOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	Path       string `json:"path" jsonschema:"description=directory path to list, default to root directory"`
+	Ref        string `json:"ref" jsonschema:"description=the name of the commit/branch/tag, default uses repository's default branch"`
+}
+
+type DirectoryListResult struct {
+	Infos []DirectoryOrFileInfo
+}
+
+type DirectoryOrFileInfo struct {
+	Name     string
+	Path     string
+	Size     int64
+	Type     string
+	Encoding string
+}

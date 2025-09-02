@@ -96,6 +96,34 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("list_branches", "list branches of the repository",
+		func(opt model.BranchListOption) (*mcpgo.ToolResponse, error) {
+			branches, err := client.ListBranches(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(branches)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("list_directory", "list directories and files in a repository directory",
+		func(opt model.DirectoryListOption) (*mcpgo.ToolResponse, error) {
+			directory, err := client.ListDirectory(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(directory)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

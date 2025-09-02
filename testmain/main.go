@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	client := client.NewClient()
+	client := client.NewClient("")
 	r, err := client.ListReleases(model.ReleaseListOption{
 		Owner:      "koreader",
 		Repository: "koreader",

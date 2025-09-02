@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 
 	"github.com/Felamande/githubMcp/client"
 	"github.com/Felamande/githubMcp/model"
@@ -11,7 +12,8 @@ import (
 
 func main() {
 	done := make(chan struct{})
-	client := client.NewClient()
+	token := os.Getenv("GITHUB_TOKEN")
+	client := client.NewClient(token)
 	server := mcpgo.NewServer(stdio.NewStdioServerTransport())
 	err := server.RegisterTool("search_github_repository", "search github repositories using github search syntax",
 		func(opt model.SearchOption) (*mcpgo.ToolResponse, error) {

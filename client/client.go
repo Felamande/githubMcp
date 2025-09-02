@@ -15,13 +15,18 @@ type GithubClient struct {
 	c *github.Client
 }
 
-func NewClient() *GithubClient {
+func NewClient(token string) *GithubClient {
+	client := github.NewClient(nil)
+	if token != "" {
+		client = client.WithAuthToken(token)
+	}
 	return &GithubClient{
-		c: github.NewClient(nil),
+		c: client,
 	}
 }
 
 func (c *GithubClient) GetRepository(opt model.SearchOption) (r *model.SearchResult, err error) {
+
 	if opt.ResultPerpage == 0 {
 		opt.ResultPerpage = 10
 	}

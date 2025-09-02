@@ -177,3 +177,23 @@ type ReadFileResult struct {
 	TotalLines int
 	Encoding   string
 }
+
+type FindTagsOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	Pattern    string `json:"pattern" jsonschema:"required,description=regex pattern to match against tag names"`
+}
+
+type FindBranchesOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	Pattern    string `json:"pattern" jsonschema:"required,description=regex pattern to match against branch names"`
+}
+
+type FindTagsResult struct {
+	Tags []TagInfo
+}
+
+type FindBranchesResult struct {
+	Branches []BranchInfo
+}

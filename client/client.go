@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -399,7 +400,7 @@ func (c *GithubClient) ReadFile(opt model.ReadFileOption) (*model.ReadFileResult
 	}
 
 	ctx := context.Background()
-	
+
 	// Set up options with ref if provided
 	contentGetOptions := (*github.RepositoryContentGetOptions)(nil)
 	if opt.Ref != "" {
@@ -447,6 +448,81 @@ func (c *GithubClient) ReadFile(opt model.ReadFileOption) (*model.ReadFileResult
 		EndLine:    opt.EndLine,
 		TotalLines: totalLines,
 		Encoding:   fileContent.GetEncoding(),
+	}
+
+	return result, nil
+}
+
+func (c *GithubClient) FindTags(opt model.FindTagsOption) (*model.FindTagsResult, error) {
+	ctx := context.Background()
+
+	tags, _, err := c.c.Repositories.ListTags(ctx, opt.Owner, opt.Repository, &github.ListOptions{
+		PerPage: 1000, // Get more tags to search through
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	pattern, err := regexp.Compile(opt.Pattern)
+	if err != nil {
+		return nil, fmt.Errorf("invalid regex pattern: %v", err)
+	}
+
+	var matchedTags []model.TagInfo
+	for _, tag := range tags {
+		if pattern.MatchString(tag.GetName()) {
+			tagResult := model.TagInfo{
+				Name:       tag.GetName(),
+				ZipballURL: tag.GetZipballURL(),
+				TarballURL: tag.GetTarballURL(),
+			}
+			if commit := tag.GetCommit(); commit != nil {
+				tagResult.CommitSHA = commit.GetSHA()
+			}
+			matchedTags = append(matchedTags, tagResult)
+		}
+	}
+
+	result := &model.FindTagsResult{
+		Tags: matchedTags,
+	}
+
+	return result, nil
+}
+
+func (c *GithubClient) FindBranches(opt model.FindBranchesOption) (*model.FindBranchesResult, error) {
+	ctx := context.Background()
+
+	branches, _, err := c.c.Repositories.ListBranches(ctx, opt.Owner, opt.Repository, &github.BranchListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 1000, // Get more branches to search through
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	pattern, err := regexp.Compile(opt.Pattern)
+	if err != nil {
+		return nil, fmt.Errorf("invalid regex pattern: %v", err)
+	}
+
+	var matchedBranches []model.BranchInfo
+	for _, branch := range branches {
+		if pattern.MatchString(branch.GetName()) {
+			branchInfo := model.BranchInfo{
+				Name:      branch.GetName(),
+				Protected: branch.GetProtected(),
+			}
+			if commit := branch.GetCommit(); commit != nil {
+				branchInfo.CommitSHA = commit.GetSHA()
+			}
+			matchedBranches = append(matchedBranches, branchInfo)
+		}
+	}
+
+	result := &model.FindBranchesResult{
+		Branches: matchedBranches,
 	}
 
 	return result, nil

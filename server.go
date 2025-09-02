@@ -138,6 +138,34 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("find_tags", "find tags matching a regex pattern",
+		func(opt model.FindTagsOption) (*mcpgo.ToolResponse, error) {
+			tags, err := client.FindTags(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(tags)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("find_branches", "find branches matching a regex pattern",
+		func(opt model.FindBranchesOption) (*mcpgo.ToolResponse, error) {
+			branches, err := client.FindBranches(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(branches)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

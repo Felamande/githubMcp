@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/Felamande/githubMcp/model"
 	"github.com/google/go-github/v74/github"
@@ -219,4 +220,95 @@ func (c *GithubClient) ListTags(opt model.TagListOption) (*model.TagListResult, 
 	}
 
 	return result, nil
+}
+
+func (c *GithubClient) ListCommits(opt model.CommitListOption) (*model.CommitListResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.CommitsListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+	}
+
+	commits, resp, err := c.c.Repositories.ListCommits(ctx, opt.Owner, opt.Repository, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var commitInfos []model.CommitInfo
+	for _, commitResult := range commits {
+		commitInfo := model.CommitInfo{
+			SHA:              commitResult.GetSHA(),
+			URL:              commitResult.GetHTMLURL(),
+			ParentCommitHash: make([]string, 0),
+		}
+
+		if commit := commitResult.GetCommit(); commit != nil {
+			commitInfo.Message = commit.GetMessage()
+
+			if author := commit.GetAuthor(); author != nil {
+				commitInfo.Author = author.GetName()
+				commitInfo.AuthorEmail = author.GetEmail()
+				commitInfo.Date = author.GetDate().Format(time.RFC3339)
+			}
+			if committer := commit.GetCommitter(); committer != nil {
+				commitInfo.Committer = committer.GetName()
+				commitInfo.CommitterEmail = committer.GetEmail()
+			}
+
+			for _, parent := range commit.Parents {
+				commitInfo.ParentCommitHash = append(commitInfo.ParentCommitHash, parent.GetSHA())
+			}
+
+		}
+
+		commitInfos = append(commitInfos, commitInfo)
+	}
+
+	result := &model.CommitListResult{
+		NextPage: resp.NextPage,
+		LastPage: resp.LastPage,
+		Commits:  commitInfos,
+	}
+
+	return result, nil
+}
+
+func (c *GithubClient) GetCommitBySHA(opt model.CommitBySHAOption) (*model.CommitInfo, error) {
+	ctx := context.Background()
+
+	commitResult, _, err := c.c.Repositories.GetCommit(ctx, opt.Owner, opt.Repository, opt.SHA, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	commitInfo := &model.CommitInfo{
+		SHA: commitResult.GetSHA(),
+		URL: commitResult.GetHTMLURL(),
+	}
+
+	if commit := commitResult.GetCommit(); commit != nil {
+		commitInfo.Message = commit.GetMessage()
+
+		if author := commit.GetAuthor(); author != nil {
+			commitInfo.Author = author.GetName()
+			commitInfo.AuthorEmail = author.GetEmail()
+			commitInfo.Date = author.GetDate().Format(time.RFC3339)
+		}
+		if committer := commit.GetCommitter(); committer != nil {
+			commitInfo.Committer = committer.GetName()
+			commitInfo.CommitterEmail = committer.GetEmail()
+		}
+
+	}
+
+	return commitInfo, nil
 }

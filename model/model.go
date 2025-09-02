@@ -66,9 +66,9 @@ type ReadmeOption struct {
 }
 
 type ReadmeResult struct {
-	Content   string
-	StartLine int
-	EndLine   int
+	Content    string
+	StartLine  int
+	EndLine    int
 	TotalLines int
 }
 
@@ -90,4 +90,35 @@ type TagInfo struct {
 	CommitSHA  string
 	ZipballURL string
 	TarballURL string
+}
+
+type CommitListOption struct {
+	Owner         string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository    string `json:"repository" jsonschema:"required,description=name of the repository"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number of the search result,start from 1 and default to 1"`
+}
+
+type CommitListResult struct {
+	NextPage int
+	LastPage int
+	Commits  []CommitInfo
+}
+
+type CommitInfo struct {
+	SHA              string
+	Message          string
+	Author           string
+	AuthorEmail      string
+	Committer        string
+	CommitterEmail   string
+	Date             string
+	URL              string
+	ParentCommitHash []string
+}
+
+type CommitBySHAOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	SHA        string `json:"sha" jsonschema:"required,description=the SHA hash of the commit"`
 }

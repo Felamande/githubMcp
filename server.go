@@ -68,6 +68,34 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("list_commits", "list commits of the repository",
+		func(opt model.CommitListOption) (*mcpgo.ToolResponse, error) {
+			commits, err := client.ListCommits(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(commits)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("get_commit_by_sha", "get commit details by SHA hash",
+		func(opt model.CommitBySHAOption) (*mcpgo.ToolResponse, error) {
+			commit, err := client.GetCommitBySHA(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(commit)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

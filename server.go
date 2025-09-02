@@ -222,6 +222,20 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("list_issue_labels", "list all labels available in a repository",
+		func(opt model.ListIssueLabelsOption) (*mcpgo.ToolResponse, error) {
+			labels, err := client.ListIssueLabels(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(labels)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

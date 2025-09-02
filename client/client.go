@@ -849,3 +849,35 @@ func (c *GithubClient) ListIssueComments(opt model.ListIssueCommentsOption) ([]m
 
 	return commentInfos, nil
 }
+
+func (c *GithubClient) ListIssueLabels(opt model.ListIssueLabelsOption) ([]model.LabelInfo, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.ListOptions{
+		PerPage: opt.ResultPerpage,
+		Page:    opt.Page,
+	}
+
+	labels, _, err := c.c.Issues.ListLabels(ctx, opt.Owner, opt.Repository, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var labelInfos []model.LabelInfo
+	for _, label := range labels {
+		labelInfo := model.LabelInfo{
+			Name:        label.GetName(),
+			Color:       label.GetColor(),
+			Description: label.GetDescription(),
+		}
+		labelInfos = append(labelInfos, labelInfo)
+	}
+
+	return labelInfos, nil
+}

@@ -266,6 +266,13 @@ type ListIssueCommentsOption struct {
 	Page          int    `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
 }
 
+type ListIssueLabelsOption struct {
+	Owner         string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository    string `json:"repository" jsonschema:"required,description=name of the repository"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
+}
+
 type IssuesListResult struct {
 	TotalCount int
 	NextPage   int

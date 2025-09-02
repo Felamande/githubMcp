@@ -234,3 +234,91 @@ type MatchDetail struct {
 	Indices []int
 	Text    string
 }
+
+type ListIssuesOption struct {
+	Owner         string   `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository    string   `json:"repository" jsonschema:"required,description=name of the repository"`
+	State         string   `json:"state" jsonschema:"description=filter by issue state: open, closed, or all"`
+	Labels        []string `json:"labels" jsonschema:"description=filter by labels (comma separated)"`
+	Assignee      string   `json:"assignee" jsonschema:"description=filter by assignee username"`
+	Creator       string   `json:"creator" jsonschema:"description=filter by issue creator username"`
+	Mentioned     string   `json:"mentioned" jsonschema:"description=filter by mentioned username"`
+	Milestone     string   `json:"milestone" jsonschema:"description=filter by milestone number or title"`
+	Since         string   `json:"since" jsonschema:"description=filter issues updated after this timestamp"`
+	ResultPerpage int      `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int      `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
+}
+
+type SearchIssuesOption struct {
+	Query         string `json:"query" jsonschema:"required,description=github issues search query"`
+	Sort          string `json:"sort" jsonschema:"description=sort by: created, updated, comments"`
+	Order         string `json:"order" jsonschema:"description=sort order: asc or desc"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
+}
+
+type ListIssueCommentsOption struct {
+	Owner         string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository    string `json:"repository" jsonschema:"required,description=name of the repository"`
+	IssueNumber   int    `json:"issue_number" jsonschema:"required,description=the issue number"`
+	Since         string `json:"since" jsonschema:"description=filter comments updated after this timestamp"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
+}
+
+type IssuesListResult struct {
+	TotalCount int
+	NextPage   int
+	LastPage   int
+	Issues     []IssueInfo
+}
+
+type IssueInfo struct {
+	Number    int
+	Title     string
+	State     string
+	Body      string
+	Labels    []LabelInfo
+	Assignee  *UserInfo
+	Assignees []UserInfo
+	Milestone *MilestoneInfo
+	Creator   UserInfo
+	CreatedAt string
+	UpdatedAt string
+	ClosedAt  string
+	URL       string
+	HTMLURL   string
+	Comments  int
+}
+
+type IssueCommentInfo struct {
+	ID        int64
+	Body      string
+	User      UserInfo
+	CreatedAt string
+	UpdatedAt string
+	URL       string
+	HTMLURL   string
+}
+
+type LabelInfo struct {
+	Name        string
+	Color       string
+	Description string
+}
+
+type UserInfo struct {
+	Login     string
+	ID        int64
+	AvatarURL string
+	HTMLURL   string
+	Type      string
+}
+
+type MilestoneInfo struct {
+	Number      int
+	Title       string
+	Description string
+	State       string
+	DueOn       string
+}

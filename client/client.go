@@ -593,3 +593,259 @@ func (c *GithubClient) SearchCode(opt model.SearchCodeOption) (*model.SearchCode
 
 	return searchResult, nil
 }
+
+func (c *GithubClient) ListIssues(opt model.ListIssuesOption) (*model.IssuesListResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+	if opt.State == "" {
+		opt.State = "open"
+	}
+
+	ctx := context.Background()
+	opts := &github.IssueListByRepoOptions{
+		State:       opt.State,
+		Labels:      opt.Labels,
+		Assignee:    opt.Assignee,
+		Creator:     opt.Creator,
+		Mentioned:   opt.Mentioned,
+		Milestone:   opt.Milestone,
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+	}
+
+	if opt.Since != "" {
+		if sinceTime, err := time.Parse(time.RFC3339, opt.Since); err == nil {
+			opts.Since = sinceTime
+		}
+	}
+
+	issues, resp, err := c.c.Issues.ListByRepo(ctx, opt.Owner, opt.Repository, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &model.IssuesListResult{
+		TotalCount: len(issues),
+		NextPage:   resp.NextPage,
+		LastPage:   resp.LastPage,
+		Issues:     make([]model.IssueInfo, 0),
+	}
+
+	for _, issue := range issues {
+		if issue.IsPullRequest() {
+			continue // Skip pull requests
+		}
+
+		issueInfo := model.IssueInfo{
+			Number:    issue.GetNumber(),
+			Title:     issue.GetTitle(),
+			State:     issue.GetState(),
+			Body:      issue.GetBody(),
+			Comments:  issue.GetComments(),
+			CreatedAt: issue.GetCreatedAt().Format(time.RFC3339),
+			UpdatedAt: issue.GetUpdatedAt().Format(time.RFC3339),
+			URL:       issue.GetURL(),
+			HTMLURL:   issue.GetHTMLURL(),
+		}
+
+		if issue.ClosedAt != nil {
+			issueInfo.ClosedAt = issue.ClosedAt.Format(time.RFC3339)
+		}
+
+		// Process labels
+		for _, label := range issue.Labels {
+			issueInfo.Labels = append(issueInfo.Labels, model.LabelInfo{
+				Name:        label.GetName(),
+				Color:       label.GetColor(),
+				Description: label.GetDescription(),
+			})
+		}
+
+		// Process assignee
+		if issue.Assignee != nil {
+			issueInfo.Assignee = &model.UserInfo{
+				Login:     issue.Assignee.GetLogin(),
+				ID:        issue.Assignee.GetID(),
+				AvatarURL: issue.Assignee.GetAvatarURL(),
+				HTMLURL:   issue.Assignee.GetHTMLURL(),
+				Type:      issue.Assignee.GetType(),
+			}
+		}
+
+		// Process assignees
+		for _, assignee := range issue.Assignees {
+			issueInfo.Assignees = append(issueInfo.Assignees, model.UserInfo{
+				Login:     assignee.GetLogin(),
+				ID:        assignee.GetID(),
+				AvatarURL: assignee.GetAvatarURL(),
+				HTMLURL:   assignee.GetHTMLURL(),
+				Type:      assignee.GetType(),
+			})
+		}
+
+		// Process creator
+		if issue.User != nil {
+			issueInfo.Creator = model.UserInfo{
+				Login:     issue.User.GetLogin(),
+				ID:        issue.User.GetID(),
+				AvatarURL: issue.User.GetAvatarURL(),
+				HTMLURL:   issue.User.GetHTMLURL(),
+				Type:      issue.User.GetType(),
+			}
+		}
+
+		// Process milestone
+		if issue.Milestone != nil {
+			issueInfo.Milestone = &model.MilestoneInfo{
+				Number:      issue.Milestone.GetNumber(),
+				Title:       issue.Milestone.GetTitle(),
+				Description: issue.Milestone.GetDescription(),
+				State:       issue.Milestone.GetState(),
+			}
+			if issue.Milestone.DueOn != nil {
+				issueInfo.Milestone.DueOn = issue.Milestone.DueOn.Format(time.RFC3339)
+			}
+		}
+
+		result.Issues = append(result.Issues, issueInfo)
+	}
+
+	return result, nil
+}
+
+func (c *GithubClient) SearchIssues(opt model.SearchIssuesOption) (*model.IssuesListResult, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.SearchOptions{
+		Sort:  opt.Sort,
+		Order: opt.Order,
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+	}
+
+	result, resp, err := c.c.Search.Issues(ctx, opt.Query, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	searchResult := &model.IssuesListResult{
+		TotalCount: result.GetTotal(),
+		NextPage:   resp.NextPage,
+		LastPage:   resp.LastPage,
+		Issues:     make([]model.IssueInfo, 0),
+	}
+
+	for _, issue := range result.Issues {
+		if issue.IsPullRequest() {
+			continue // Skip pull requests
+		}
+
+		issueInfo := model.IssueInfo{
+			Number:    issue.GetNumber(),
+			Title:     issue.GetTitle(),
+			State:     issue.GetState(),
+			Body:      issue.GetBody(),
+			Comments:  issue.GetComments(),
+			CreatedAt: issue.GetCreatedAt().Format(time.RFC3339),
+			UpdatedAt: issue.GetUpdatedAt().Format(time.RFC3339),
+			URL:       issue.GetURL(),
+			HTMLURL:   issue.GetHTMLURL(),
+		}
+
+		if issue.ClosedAt != nil {
+			issueInfo.ClosedAt = issue.ClosedAt.Format(time.RFC3339)
+		}
+
+		// Process labels
+		for _, label := range issue.Labels {
+			issueInfo.Labels = append(issueInfo.Labels, model.LabelInfo{
+				Name:        label.GetName(),
+				Color:       label.GetColor(),
+				Description: label.GetDescription(),
+			})
+		}
+
+		// Process creator
+		if issue.User != nil {
+			issueInfo.Creator = model.UserInfo{
+				Login:     issue.User.GetLogin(),
+				ID:        issue.User.GetID(),
+				AvatarURL: issue.User.GetAvatarURL(),
+				HTMLURL:   issue.User.GetHTMLURL(),
+				Type:      issue.User.GetType(),
+			}
+		}
+
+		searchResult.Issues = append(searchResult.Issues, issueInfo)
+	}
+
+	return searchResult, nil
+}
+
+func (c *GithubClient) ListIssueComments(opt model.ListIssueCommentsOption) ([]model.IssueCommentInfo, error) {
+	if opt.ResultPerpage == 0 {
+		opt.ResultPerpage = 10
+	}
+	if opt.Page == 0 {
+		opt.Page = 1
+	}
+
+	ctx := context.Background()
+	opts := &github.IssueListCommentsOptions{
+		ListOptions: github.ListOptions{
+			PerPage: opt.ResultPerpage,
+			Page:    opt.Page,
+		},
+	}
+
+	if opt.Since != "" {
+		if sinceTime, err := time.Parse(time.RFC3339, opt.Since); err == nil {
+			opts.Since = &sinceTime
+		}
+	}
+
+	comments, _, err := c.c.Issues.ListComments(ctx, opt.Owner, opt.Repository, opt.IssueNumber, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var commentInfos []model.IssueCommentInfo
+	for _, comment := range comments {
+		commentInfo := model.IssueCommentInfo{
+			ID:        comment.GetID(),
+			Body:      comment.GetBody(),
+			CreatedAt: comment.GetCreatedAt().Format(time.RFC3339),
+			UpdatedAt: comment.GetUpdatedAt().Format(time.RFC3339),
+			URL:       comment.GetURL(),
+			HTMLURL:   comment.GetHTMLURL(),
+		}
+
+		if comment.User != nil {
+			commentInfo.User = model.UserInfo{
+				Login:     comment.User.GetLogin(),
+				ID:        comment.User.GetID(),
+				AvatarURL: comment.User.GetAvatarURL(),
+				HTMLURL:   comment.User.GetHTMLURL(),
+				Type:      comment.User.GetType(),
+			}
+		}
+
+		commentInfos = append(commentInfos, commentInfo)
+	}
+
+	return commentInfos, nil
+}

@@ -180,6 +180,48 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("list_issues", "list repository issues with filtering",
+		func(opt model.ListIssuesOption) (*mcpgo.ToolResponse, error) {
+			issues, err := client.ListIssues(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(issues)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("search_issues", "search issues across GitHub",
+		func(opt model.SearchIssuesOption) (*mcpgo.ToolResponse, error) {
+			issues, err := client.SearchIssues(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(issues)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("list_issue_comments", "list comments for a specific issue",
+		func(opt model.ListIssueCommentsOption) (*mcpgo.ToolResponse, error) {
+			comments, err := client.ListIssueComments(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(comments)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.Serve()
 	if err != nil {
 		panic(err)

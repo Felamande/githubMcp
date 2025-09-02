@@ -244,6 +244,7 @@ type ListIssuesOption struct {
 	Creator       string   `json:"creator" jsonschema:"description=filter by issue creator username"`
 	Mentioned     string   `json:"mentioned" jsonschema:"description=filter by mentioned username"`
 	Milestone     string   `json:"milestone" jsonschema:"description=filter by milestone number or title"`
+	Sort          string   `json:"sort" jsonschema:"description=issue list sort can be created, updated and comments. Default value is created"`
 	Since         string   `json:"since" jsonschema:"description=filter issues updated after this timestamp"`
 	ResultPerpage int      `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
 	Page          int      `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
@@ -285,11 +286,11 @@ type IssueInfo struct {
 	Title     string
 	State     string
 	Body      string
-	Labels    []LabelInfo
-	Assignee  *UserInfo
-	Assignees []UserInfo
+	Labels    []string
+	Assignee  string
+	Assignees []string
 	Milestone *MilestoneInfo
-	Creator   UserInfo
+	Creator   string
 	CreatedAt string
 	UpdatedAt string
 	ClosedAt  string
@@ -301,7 +302,7 @@ type IssueInfo struct {
 type IssueCommentInfo struct {
 	ID        int64
 	Body      string
-	User      UserInfo
+	User      string
 	CreatedAt string
 	UpdatedAt string
 	URL       string
@@ -331,15 +332,15 @@ type MilestoneInfo struct {
 }
 
 type ListPROption struct {
-	Owner         string   `json:"owner" jsonschema:"required,description=owner of the repository"`
-	Repository    string   `json:"repository" jsonschema:"required,description=name of the repository"`
-	State         string   `json:"state" jsonschema:"description=filter by PR state: open, closed, or all"`
-	Head          string   `json:"head" jsonschema:"description=filter by head branch or user:branch"`
-	Base          string   `json:"base" jsonschema:"description=filter by base branch name"`
-	Sort          string   `json:"sort" jsonschema:"description=sort by: created, updated, popularity, long-running"`
-	Direction     string   `json:"direction" jsonschema:"description=sort direction: asc or desc"`
-	ResultPerpage int      `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
-	Page          int      `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
+	Owner         string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository    string `json:"repository" jsonschema:"required,description=name of the repository"`
+	State         string `json:"state" jsonschema:"description=filter by PR state: open, closed, or all"`
+	Head          string `json:"head" jsonschema:"description=filter by head branch or user:branch"`
+	Base          string `json:"base" jsonschema:"description=filter by base branch name"`
+	Sort          string `json:"sort" jsonschema:"description=sort by: created, updated, popularity, long-running"`
+	Direction     string `json:"direction" jsonschema:"description=sort direction: asc or desc"`
+	ResultPerpage int    `json:"result_per_page" jsonschema:"description=results per page, default to 10"`
+	Page          int    `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
 }
 
 type GetPROption struct {
@@ -364,32 +365,32 @@ type PRListResult struct {
 }
 
 type PRInfo struct {
-	Number          int
-	Title           string
-	State           string
-	Body            string
-	Labels          []LabelInfo
-	Assignee        *UserInfo
-	Assignees       []UserInfo
-	RequestedReviewers []UserInfo
-	Milestone       *MilestoneInfo
-	Creator         UserInfo
-	CreatedAt       string
-	UpdatedAt       string
-	ClosedAt        string
-	MergedAt        string
-	URL             string
-	HTMLURL         string
-	Comments        int
-	Additions       int
-	Deletions       int
-	ChangedFiles    int
-	Mergeable       bool
-	MergeableState  string
-	Merged          bool
-	BaseRef         string
-	HeadRef         string
-	Draft           bool
-	ReviewComments  int
-	Commits         int
+	Number             int
+	Title              string
+	State              string
+	Body               string
+	Labels             []string
+	Assignee           string
+	Assignees          []string
+	RequestedReviewers []string
+	Milestone          *MilestoneInfo
+	Creator            string
+	CreatedAt          string
+	UpdatedAt          string
+	ClosedAt           string
+	MergedAt           string
+	URL                string
+	HTMLURL            string
+	Comments           int
+	Additions          int
+	Deletions          int
+	ChangedFiles       int
+	Mergeable          bool
+	MergeableState     string
+	Merged             bool
+	BaseRef            string
+	HeadRef            string
+	Draft              bool
+	ReviewComments     int
+	Commits            int
 }

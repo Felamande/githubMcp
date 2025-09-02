@@ -618,6 +618,7 @@ func (c *GithubClient) ListIssues(opt model.ListIssuesOption) (*model.IssuesList
 		Creator:   opt.Creator,
 		Mentioned: opt.Mentioned,
 		Milestone: opt.Milestone,
+		Sort:      opt.Sort,
 		ListOptions: github.ListOptions{
 			PerPage: opt.ResultPerpage,
 			Page:    opt.Page,
@@ -665,44 +666,22 @@ func (c *GithubClient) ListIssues(opt model.ListIssuesOption) (*model.IssuesList
 
 		// Process labels
 		for _, label := range issue.Labels {
-			issueInfo.Labels = append(issueInfo.Labels, model.LabelInfo{
-				Name:        label.GetName(),
-				Color:       label.GetColor(),
-				Description: label.GetDescription(),
-			})
+			issueInfo.Labels = append(issueInfo.Labels, label.GetName())
 		}
 
 		// Process assignee
 		if issue.Assignee != nil {
-			issueInfo.Assignee = &model.UserInfo{
-				Login:     issue.Assignee.GetLogin(),
-				ID:        issue.Assignee.GetID(),
-				AvatarURL: issue.Assignee.GetAvatarURL(),
-				HTMLURL:   issue.Assignee.GetHTMLURL(),
-				Type:      issue.Assignee.GetType(),
-			}
+			issueInfo.Assignee = issue.Assignee.GetLogin()
 		}
 
 		// Process assignees
 		for _, assignee := range issue.Assignees {
-			issueInfo.Assignees = append(issueInfo.Assignees, model.UserInfo{
-				Login:     assignee.GetLogin(),
-				ID:        assignee.GetID(),
-				AvatarURL: assignee.GetAvatarURL(),
-				HTMLURL:   assignee.GetHTMLURL(),
-				Type:      assignee.GetType(),
-			})
+			issueInfo.Assignees = append(issueInfo.Assignees, assignee.GetLogin())
 		}
 
 		// Process creator
 		if issue.User != nil {
-			issueInfo.Creator = model.UserInfo{
-				Login:     issue.User.GetLogin(),
-				ID:        issue.User.GetID(),
-				AvatarURL: issue.User.GetAvatarURL(),
-				HTMLURL:   issue.User.GetHTMLURL(),
-				Type:      issue.User.GetType(),
-			}
+			issueInfo.Creator = issue.User.GetLogin()
 		}
 
 		// Process milestone
@@ -777,22 +756,12 @@ func (c *GithubClient) SearchIssues(opt model.SearchIssuesOption) (*model.Issues
 
 		// Process labels
 		for _, label := range issue.Labels {
-			issueInfo.Labels = append(issueInfo.Labels, model.LabelInfo{
-				Name:        label.GetName(),
-				Color:       label.GetColor(),
-				Description: label.GetDescription(),
-			})
+			issueInfo.Labels = append(issueInfo.Labels, label.GetName())
 		}
 
 		// Process creator
 		if issue.User != nil {
-			issueInfo.Creator = model.UserInfo{
-				Login:     issue.User.GetLogin(),
-				ID:        issue.User.GetID(),
-				AvatarURL: issue.User.GetAvatarURL(),
-				HTMLURL:   issue.User.GetHTMLURL(),
-				Type:      issue.User.GetType(),
-			}
+			issueInfo.Creator = issue.User.GetLogin()
 		}
 
 		searchResult.Issues = append(searchResult.Issues, issueInfo)
@@ -840,13 +809,7 @@ func (c *GithubClient) ListIssueComments(opt model.ListIssueCommentsOption) ([]m
 		}
 
 		if comment.User != nil {
-			commentInfo.User = model.UserInfo{
-				Login:     comment.User.GetLogin(),
-				ID:        comment.User.GetID(),
-				AvatarURL: comment.User.GetAvatarURL(),
-				HTMLURL:   comment.User.GetHTMLURL(),
-				Type:      comment.User.GetType(),
-			}
+			commentInfo.User = comment.User.GetLogin()
 		}
 
 		commentInfos = append(commentInfos, commentInfo)
@@ -956,55 +919,27 @@ func (c *GithubClient) ListPullRequests(opt model.ListPROption) (*model.PRListRe
 
 		// Process labels
 		for _, label := range pr.Labels {
-			prInfo.Labels = append(prInfo.Labels, model.LabelInfo{
-				Name:        label.GetName(),
-				Color:       label.GetColor(),
-				Description: label.GetDescription(),
-			})
+			prInfo.Labels = append(prInfo.Labels, label.GetName())
 		}
 
 		// Process assignee
 		if pr.Assignee != nil {
-			prInfo.Assignee = &model.UserInfo{
-				Login:     pr.Assignee.GetLogin(),
-				ID:        pr.Assignee.GetID(),
-				AvatarURL: pr.Assignee.GetAvatarURL(),
-				HTMLURL:   pr.Assignee.GetHTMLURL(),
-				Type:      pr.Assignee.GetType(),
-			}
+			prInfo.Assignee = pr.Assignee.GetLogin()
 		}
 
 		// Process assignees
 		for _, assignee := range pr.Assignees {
-			prInfo.Assignees = append(prInfo.Assignees, model.UserInfo{
-				Login:     assignee.GetLogin(),
-				ID:        assignee.GetID(),
-				AvatarURL: assignee.GetAvatarURL(),
-				HTMLURL:   assignee.GetHTMLURL(),
-				Type:      assignee.GetType(),
-			})
+			prInfo.Assignees = append(prInfo.Assignees, assignee.GetLogin())
 		}
 
 		// Process requested reviewers
 		for _, reviewer := range pr.RequestedReviewers {
-			prInfo.RequestedReviewers = append(prInfo.RequestedReviewers, model.UserInfo{
-				Login:     reviewer.GetLogin(),
-				ID:        reviewer.GetID(),
-				AvatarURL: reviewer.GetAvatarURL(),
-				HTMLURL:   reviewer.GetHTMLURL(),
-				Type:      reviewer.GetType(),
-			})
+			prInfo.RequestedReviewers = append(prInfo.RequestedReviewers, reviewer.GetLogin())
 		}
 
 		// Process creator
 		if pr.User != nil {
-			prInfo.Creator = model.UserInfo{
-				Login:     pr.User.GetLogin(),
-				ID:        pr.User.GetID(),
-				AvatarURL: pr.User.GetAvatarURL(),
-				HTMLURL:   pr.User.GetHTMLURL(),
-				Type:      pr.User.GetType(),
-			}
+			prInfo.Creator = pr.User.GetLogin()
 		}
 
 		// Process milestone
@@ -1066,55 +1001,27 @@ func (c *GithubClient) GetPullRequest(opt model.GetPROption) (*model.PRInfo, err
 
 	// Process labels
 	for _, label := range pr.Labels {
-		prInfo.Labels = append(prInfo.Labels, model.LabelInfo{
-			Name:        label.GetName(),
-			Color:       label.GetColor(),
-			Description: label.GetDescription(),
-		})
+		prInfo.Labels = append(prInfo.Labels, label.GetName())
 	}
 
 	// Process assignee
 	if pr.Assignee != nil {
-		prInfo.Assignee = &model.UserInfo{
-			Login:     pr.Assignee.GetLogin(),
-			ID:        pr.Assignee.GetID(),
-			AvatarURL: pr.Assignee.GetAvatarURL(),
-			HTMLURL:   pr.Assignee.GetHTMLURL(),
-			Type:      pr.Assignee.GetType(),
-		}
+		prInfo.Assignee = pr.Assignee.GetLogin()
 	}
 
 	// Process assignees
 	for _, assignee := range pr.Assignees {
-		prInfo.Assignees = append(prInfo.Assignees, model.UserInfo{
-			Login:     assignee.GetLogin(),
-			ID:        assignee.GetID(),
-			AvatarURL: assignee.GetAvatarURL(),
-			HTMLURL:   assignee.GetHTMLURL(),
-			Type:      assignee.GetType(),
-		})
+		prInfo.Assignees = append(prInfo.Assignees, assignee.GetLogin())
 	}
 
 	// Process requested reviewers
 	for _, reviewer := range pr.RequestedReviewers {
-		prInfo.RequestedReviewers = append(prInfo.RequestedReviewers, model.UserInfo{
-			Login:     reviewer.GetLogin(),
-			ID:        reviewer.GetID(),
-			AvatarURL: reviewer.GetAvatarURL(),
-			HTMLURL:   reviewer.GetHTMLURL(),
-			Type:      reviewer.GetType(),
-		})
+		prInfo.RequestedReviewers = append(prInfo.RequestedReviewers, reviewer.GetLogin())
 	}
 
 	// Process creator
 	if pr.User != nil {
-		prInfo.Creator = model.UserInfo{
-			Login:     pr.User.GetLogin(),
-			ID:        pr.User.GetID(),
-			AvatarURL: pr.User.GetAvatarURL(),
-			HTMLURL:   pr.User.GetHTMLURL(),
-			Type:      pr.User.GetType(),
-		}
+		prInfo.Creator = pr.User.GetLogin()
 	}
 
 	// Process milestone
@@ -1193,22 +1100,12 @@ func (c *GithubClient) SearchPullRequests(opt model.SearchPROption) (*model.PRLi
 
 		// Process labels
 		for _, label := range issue.Labels {
-			prInfo.Labels = append(prInfo.Labels, model.LabelInfo{
-				Name:        label.GetName(),
-				Color:       label.GetColor(),
-				Description: label.GetDescription(),
-			})
+			prInfo.Labels = append(prInfo.Labels, label.GetName())
 		}
 
 		// Process creator
 		if issue.User != nil {
-			prInfo.Creator = model.UserInfo{
-				Login:     issue.User.GetLogin(),
-				ID:        issue.User.GetID(),
-				AvatarURL: issue.User.GetAvatarURL(),
-				HTMLURL:   issue.User.GetHTMLURL(),
-				Type:      issue.User.GetType(),
-			}
+			prInfo.Creator = issue.User.GetLogin()
 		}
 
 		searchResult.PRs = append(searchResult.PRs, prInfo)

@@ -188,3 +188,109 @@ func TestListCommitsIncludesParents(t *testing.T) {
 		t.Errorf("Expected parent SHA %s, got %s", "parentsha1234567890abcdef1234567890abcdef12", commit.ParentCommitHash[0])
 	}
 }
+
+// TestGetCommitFilesBySHA tests that commit file information is correctly retrieved
+func TestGetCommitFilesBySHA(t *testing.T) {
+	// Create a test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/repos/testowner/testrepo/commits/testsha1234567890abcdef1234567890abcdef12" {
+			// Return a sample commit response with file information
+			commitResponse := map[string]interface{}{
+				"sha": "testsha1234567890abcdef1234567890abcdef12",
+				"commit": map[string]interface{}{
+					"message": "test commit message",
+					"author": map[string]interface{}{
+						"name":  "test author",
+						"email": "author@example.com",
+						"date":  "2023-01-01T00:00:00Z",
+					},
+					"committer": map[string]interface{}{
+						"name":  "test committer",
+						"email": "committer@example.com",
+					},
+				},
+				"html_url": "https://github.com/testowner/testrepo/commit/testsha1234567890abcdef1234567890abcdef12",
+				"files": []map[string]interface{}{
+					{
+						"sha":               "file1234567890abcdef1234567890abcdef12",
+						"filename":          "README.md",
+						"additions":         10,
+						"deletions":         2,
+						"changes":          12,
+						"status":           "modified",
+						"patch":            "@@ -1,5 +1,5 @@\n-test content\n+new test content\n",
+						"blob_url":         "https://github.com/testowner/testrepo/blob/testsha1234567890abcdef1234567890abcdef12/README.md",
+						"raw_url":          "https://github.com/testowner/testrepo/raw/testsha1234567890abcdef1234567890abcdef12/README.md",
+						"contents_url":     "https://api.github.com/repos/testowner/testrepo/contents/README.md?ref=testsha1234567890abcdef1234567890abcdef12",
+						"previous_filename": "OLD_README.md",
+					},
+					{
+						"sha":       "file234567890abcdef1234567890abcdef123",
+						"filename":  "src/main.go",
+						"additions": 5,
+						"deletions": 0,
+						"changes":   5,
+						"status":    "added",
+						"blob_url":  "https://github.com/testowner/testrepo/blob/testsha1234567890abcdef1234567890abcdef12/src/main.go",
+					},
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(commitResponse)
+			return
+		}
+		http.Error(w, "Not found", http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	// Create client with test server URL
+	githubClient := github.NewClient(nil)
+	githubClient.BaseURL, _ = githubClient.BaseURL.Parse(server.URL + "/")
+	client := &GithubClient{c: githubClient}
+
+	// Test GetCommitFilesBySHA
+	result, err := client.GetCommitFilesBySHA(model.GetCommitFilesBySHAOption{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		SHA:        "testsha1234567890abcdef1234567890abcdef12",
+	})
+
+	if err != nil {
+		t.Fatalf("GetCommitFilesBySHA failed: %v", err)
+	}
+
+	if result.Files == nil {
+		t.Fatal("Files should not be nil")
+	}
+
+	if len(result.Files) != 2 {
+		t.Errorf("Expected 2 files, got %d", len(result.Files))
+	}
+
+	// Test first file
+	file1 := result.Files[0]
+	if file1.Filename != "README.md" {
+		t.Errorf("Expected filename %s, got %s", "README.md", file1.Filename)
+	}
+	if file1.Additions != 10 {
+		t.Errorf("Expected additions %d, got %d", 10, file1.Additions)
+	}
+	if file1.Deletions != 2 {
+		t.Errorf("Expected deletions %d, got %d", 2, file1.Deletions)
+	}
+	if file1.Status != "modified" {
+		t.Errorf("Expected status %s, got %s", "modified", file1.Status)
+	}
+	if file1.PreviousFilename != "OLD_README.md" {
+		t.Errorf("Expected previous filename %s, got %s", "OLD_README.md", file1.PreviousFilename)
+	}
+
+	// Test second file
+	file2 := result.Files[1]
+	if file2.Filename != "src/main.go" {
+		t.Errorf("Expected filename %s, got %s", "src/main.go", file2.Filename)
+	}
+	if file2.Status != "added" {
+		t.Errorf("Expected status %s, got %s", "added", file2.Status)
+	}
+}

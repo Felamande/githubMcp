@@ -335,6 +335,39 @@ func (c *GithubClient) GetCommitBySHA(opt model.GetCommitBySHAOption) (*model.Co
 	return commitInfo, nil
 }
 
+func (c *GithubClient) GetCommitFilesBySHA(opt model.GetCommitFilesBySHAOption) (*model.CommitFilesResult, error) {
+	ctx := context.Background()
+
+	commitResult, _, err := c.c.Repositories.GetCommit(ctx, opt.Owner, opt.Repository, opt.SHA, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &model.CommitFilesResult{
+		Files: make([]model.CommitFileInfo, 0),
+	}
+
+	// Process file information
+	for _, file := range commitResult.Files {
+		fileInfo := model.CommitFileInfo{
+			SHA:              file.GetSHA(),
+			Filename:         file.GetFilename(),
+			Additions:        file.GetAdditions(),
+			Deletions:        file.GetDeletions(),
+			Changes:          file.GetChanges(),
+			Status:           file.GetStatus(),
+			Patch:            file.GetPatch(),
+			BlobURL:          file.GetBlobURL(),
+			RawURL:           file.GetRawURL(),
+			ContentsURL:      file.GetContentsURL(),
+			PreviousFilename: file.GetPreviousFilename(),
+		}
+		result.Files = append(result.Files, fileInfo)
+	}
+
+	return result, nil
+}
+
 func (c *GithubClient) ListBranches(opt model.BranchListOption) (*model.BranchListResult, error) {
 	if opt.ResultPerpage == 0 {
 		opt.ResultPerpage = 10

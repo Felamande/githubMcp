@@ -431,3 +431,27 @@ type PRInfo struct {
 	ReviewComments     int
 	Commits            int
 }
+
+type GetCommitFilesBySHAOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	SHA        string `json:"sha" jsonschema:"required,description=the SHA hash of the commit"`
+}
+
+type CommitFileInfo struct {
+	SHA              string `json:"sha,omitempty"`
+	Filename         string `json:"filename,omitempty"`
+	Additions        int    `json:"additions,omitempty"`
+	Deletions        int    `json:"deletions,omitempty"`
+	Changes          int    `json:"changes,omitempty"`
+	Status           string `json:"status,omitempty"`
+	Patch            string `json:"patch,omitempty"`
+	BlobURL          string `json:"blob_url,omitempty"`
+	RawURL           string `json:"raw_url,omitempty"`
+	ContentsURL      string `json:"contents_url,omitempty"`
+	PreviousFilename string `json:"previous_filename,omitempty"`
+}
+
+type CommitFilesResult struct {
+	Files []CommitFileInfo `json:"files"`
+}

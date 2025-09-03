@@ -112,6 +112,20 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("get_commit_files", "get file changes for a specific commit by SHA hash",
+		func(opt model.GetCommitFilesBySHAOption) (*mcpgo.ToolResponse, error) {
+			files, err := client.GetCommitFilesBySHA(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(files)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.RegisterTool("list_branches", "list branches of the repository",
 		func(opt model.BranchListOption) (*mcpgo.ToolResponse, error) {
 			branches, err := client.ListBranches(opt)

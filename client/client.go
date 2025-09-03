@@ -307,8 +307,9 @@ func (c *GithubClient) GetCommitBySHA(opt model.GetCommitBySHAOption) (*model.Co
 	}
 
 	commitInfo := &model.CommitInfo{
-		SHA: commitResult.GetSHA(),
-		URL: commitResult.GetHTMLURL(),
+		SHA:              commitResult.GetSHA(),
+		URL:              commitResult.GetHTMLURL(),
+		ParentCommitHash: make([]string, 0),
 	}
 
 	if commit := commitResult.GetCommit(); commit != nil {
@@ -324,6 +325,11 @@ func (c *GithubClient) GetCommitBySHA(opt model.GetCommitBySHAOption) (*model.Co
 			commitInfo.CommitterEmail = committer.GetEmail()
 		}
 
+	}
+
+	// Add parent commit information
+	for _, parent := range commitResult.Parents {
+		commitInfo.ParentCommitHash = append(commitInfo.ParentCommitHash, parent.GetSHA())
 	}
 
 	return commitInfo, nil

@@ -131,7 +131,17 @@ func (c *GithubClient) ListReleases(opt model.ReleaseListOption) (*model.Release
 			Description:  release.GetBody()[0:opt.DescriptionTruncateSize],
 			CreatedAt:    release.GetCreatedAt().Format("2006-01-02 15:04:05"),
 			PublishedAt:  release.GetPublishedAt().Format("2006-01-02 15:04:05"),
-			AssetsNum:    len(release.Assets),
+			// AssetsNum:    len(release.Assets),
+		}
+		releaseResult.Assets = make([]model.AssetInfo, 0)
+		for _, asset := range release.Assets {
+			assetInfo := model.AssetInfo{
+				ID:    asset.GetID(),
+				URL:   asset.GetBrowserDownloadURL(),
+				Name:  asset.GetName(),
+				Label: asset.GetLabel(),
+			}
+			releaseResult.Assets = append(releaseResult.Assets, assetInfo)
 		}
 		releasesResult.Releases = append(releasesResult.Releases, releaseResult)
 	}

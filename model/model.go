@@ -45,6 +45,13 @@ type ReleaseListResult struct {
 	Releases []ReleaseInfo
 }
 
+type AssetInfo struct {
+	ID    int64
+	URL   string
+	Name  string
+	Label string
+}
+
 type ReleaseInfo struct {
 	Name         string
 	Tag          string
@@ -54,7 +61,7 @@ type ReleaseInfo struct {
 	Description  string
 	CreatedAt    string
 	PublishedAt  string
-	AssetsNum    int
+	Assets       []AssetInfo
 }
 
 type ReadmeOption struct {

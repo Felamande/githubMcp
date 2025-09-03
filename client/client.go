@@ -280,11 +280,10 @@ func (c *GithubClient) ListCommits(opt model.CommitListOption) (*model.CommitLis
 				commitInfo.Committer = committer.GetName()
 				commitInfo.CommitterEmail = committer.GetEmail()
 			}
+		}
 
-			for _, parent := range commit.Parents {
-				commitInfo.ParentCommitHash = append(commitInfo.ParentCommitHash, parent.GetSHA())
-			}
-
+		for _, parent := range commitResult.Parents {
+			commitInfo.ParentCommitHash = append(commitInfo.ParentCommitHash, parent.GetSHA())
 		}
 
 		commitInfos = append(commitInfos, commitInfo)

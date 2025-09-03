@@ -130,6 +130,24 @@ type CommitBySHAOption struct {
 	SHA        string `json:"sha" jsonschema:"required,description=the SHA hash of the commit"`
 }
 
+type GetTagByNameOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	TagName    string `json:"tag_name" jsonschema:"required,description=name of the tag"`
+}
+
+type GetIssueByNumberOption struct {
+	Owner       string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository  string `json:"repository" jsonschema:"required,description=name of the repository"`
+	IssueNumber int    `json:"issue_number" jsonschema:"required,description=the issue number"`
+}
+
+type GetBranchByNameOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	BranchName string `json:"branch_name" jsonschema:"required,description=name of the branch"`
+}
+
 type BranchListOption struct {
 	Owner         string `json:"owner" jsonschema:"required,description=owner of the repository"`
 	Repository    string `json:"repository" jsonschema:"required,description=name of the repository"`

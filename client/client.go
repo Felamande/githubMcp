@@ -542,6 +542,25 @@ func (c *GithubClient) FindBranches(opt model.FindBranchesOption) (*model.FindBr
 	return result, nil
 }
 
+func (c *GithubClient) GetBranchByName(opt model.GetBranchByNameOption) (*model.BranchInfo, error) {
+	ctx := context.Background()
+
+	branch, _, err := c.c.Repositories.GetBranch(ctx, opt.Owner, opt.Repository, opt.BranchName, 5)
+	if err != nil {
+		return nil, err
+	}
+
+	branchInfo := &model.BranchInfo{
+		Name:      branch.GetName(),
+		Protected: branch.GetProtected(),
+	}
+	if commit := branch.GetCommit(); commit != nil {
+		branchInfo.CommitSHA = commit.GetSHA()
+	}
+	return branchInfo, nil
+
+}
+
 func (c *GithubClient) SearchCode(opt model.SearchCodeOption) (*model.SearchCodeResult, error) {
 	if opt.ResultPerpage == 0 {
 		opt.ResultPerpage = 10
@@ -869,6 +888,72 @@ func (c *GithubClient) ListIssueLabels(opt model.ListIssueLabelsOption) (*model.
 	return lableListResult, nil
 }
 
+func (c *GithubClient) GetIssueByNumber(opt model.GetIssueByNumberOption) (*model.IssueInfo, error) {
+	ctx := context.Background()
+
+	issue, _, err := c.c.Issues.Get(ctx, opt.Owner, opt.Repository, opt.IssueNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	if issue.IsPullRequest() {
+		return nil, fmt.Errorf("issue %d is a pull request, not a regular issue", opt.IssueNumber)
+	}
+
+	issueInfo := &model.IssueInfo{
+		Number:    issue.GetNumber(),
+		Title:     issue.GetTitle(),
+		State:     issue.GetState(),
+		Body:      issue.GetBody(),
+		Comments:  issue.GetComments(),
+		CreatedAt: issue.GetCreatedAt().Format(time.RFC3339),
+		UpdatedAt: issue.GetUpdatedAt().Format(time.RFC3339),
+		URL:       issue.GetURL(),
+		HTMLURL:   issue.GetHTMLURL(),
+	}
+
+	if issue.ClosedAt != nil {
+		issueInfo.ClosedAt = issue.ClosedAt.Format(time.RFC3339)
+	}
+
+	// Process labels
+	for _, label := range issue.Labels {
+		issueInfo.Labels = append(issueInfo.Labels, label.GetName())
+	}
+
+	// Process assignees
+	for _, assignee := range issue.Assignees {
+		if assignee != nil {
+			issueInfo.Assignees = append(issueInfo.Assignees, assignee.GetLogin())
+		}
+	}
+
+	// Process assignee (single)
+	if issue.Assignee != nil {
+		issueInfo.Assignee = issue.Assignee.GetLogin()
+	}
+
+	// Process creator
+	if issue.User != nil {
+		issueInfo.Creator = issue.User.GetLogin()
+	}
+
+	// Process milestone
+	if issue.Milestone != nil {
+		issueInfo.Milestone = &model.MilestoneInfo{
+			Number:      issue.Milestone.GetNumber(),
+			Title:       issue.Milestone.GetTitle(),
+			Description: issue.Milestone.GetDescription(),
+			State:       issue.Milestone.GetState(),
+		}
+		if issue.Milestone.DueOn != nil {
+			issueInfo.Milestone.DueOn = issue.Milestone.DueOn.Format(time.RFC3339)
+		}
+	}
+
+	return issueInfo, nil
+}
+
 func (c *GithubClient) ListPullRequests(opt model.ListPROption) (*model.PRListResult, error) {
 	if opt.ResultPerpage == 0 {
 		opt.ResultPerpage = 10
@@ -980,7 +1065,7 @@ func (c *GithubClient) ListPullRequests(opt model.ListPROption) (*model.PRListRe
 	return result, nil
 }
 
-func (c *GithubClient) GetPullRequest(opt model.GetPROption) (*model.PRInfo, error) {
+func (c *GithubClient) GetPullRequestByNumber(opt model.GetPROption) (*model.PRInfo, error) {
 	ctx := context.Background()
 
 	pr, _, err := c.c.PullRequests.Get(ctx, opt.Owner, opt.Repository, opt.Number)

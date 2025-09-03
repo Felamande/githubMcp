@@ -112,6 +112,20 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("get_branch_by_name", "get detailed information about a specific branch by name",
+		func(opt model.GetBranchByNameOption) (*mcpgo.ToolResponse, error) {
+			branch, err := client.GetBranchByName(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(branch)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.RegisterTool("list_directory", "list directories and files in a repository directory",
 		func(opt model.DirectoryListOption) (*mcpgo.ToolResponse, error) {
 			directory, err := client.ListDirectory(opt)
@@ -210,6 +224,20 @@ func main() {
 		panic(err)
 	}
 
+	err = server.RegisterTool("get_issue_by_number", "get detailed information about a specific issue by number",
+		func(opt model.GetIssueByNumberOption) (*mcpgo.ToolResponse, error) {
+			issue, err := client.GetIssueByNumber(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(issue)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	err = server.RegisterTool("list_issue_comments", "list comments for a specific issue",
 		func(opt model.ListIssueCommentsOption) (*mcpgo.ToolResponse, error) {
 			comments, err := client.ListIssueComments(opt)
@@ -254,7 +282,7 @@ func main() {
 
 	err = server.RegisterTool("get_pull_request", "get detailed information about a specific pull request",
 		func(opt model.GetPROption) (*mcpgo.ToolResponse, error) {
-			pr, err := client.GetPullRequest(opt)
+			pr, err := client.GetPullRequestByNumber(opt)
 			if err != nil {
 				return nil, err
 			}

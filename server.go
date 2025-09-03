@@ -28,7 +28,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = server.RegisterTool("get_repository_releases", "get releases of the repository",
+	err = server.RegisterTool("get_releases", "get releases of the repository",
 		func(opt model.ReleaseListOption) (*mcpgo.ToolResponse, error) {
 			releases, err := client.ListReleases(opt)
 			if err != nil {
@@ -56,13 +56,27 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RegisterTool("get_repository_tags", "list tags of the repository",
+	err = server.RegisterTool("get_tags", "list tags of the repository",
 		func(opt model.TagListOption) (*mcpgo.ToolResponse, error) {
 			tags, err := client.ListTags(opt)
 			if err != nil {
 				return nil, err
 			}
 			out, err := json.Marshal(tags)
+			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.RegisterTool("get_tag", "get detailed information about a specific tag by name",
+		func(opt model.GetTagByNameOption) (*mcpgo.ToolResponse, error) {
+			tag, err := client.GetTagByName(opt)
+			if err != nil {
+				return nil, err
+			}
+			out, err := json.Marshal(tag)
 			return mcpgo.NewToolResponse(mcpgo.NewTextContent(string(out))), nil
 		},
 	)
@@ -84,8 +98,8 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RegisterTool("get_commit_by_sha", "get commit details by SHA hash",
-		func(opt model.CommitBySHAOption) (*mcpgo.ToolResponse, error) {
+	err = server.RegisterTool("get_commit", "get commit details by SHA hash",
+		func(opt model.GetCommitBySHAOption) (*mcpgo.ToolResponse, error) {
 			commit, err := client.GetCommitBySHA(opt)
 			if err != nil {
 				return nil, err
@@ -112,7 +126,7 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RegisterTool("get_branch_by_name", "get detailed information about a specific branch by name",
+	err = server.RegisterTool("get_branch", "get detailed information about a specific branch by name",
 		func(opt model.GetBranchByNameOption) (*mcpgo.ToolResponse, error) {
 			branch, err := client.GetBranchByName(opt)
 			if err != nil {
@@ -224,7 +238,7 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RegisterTool("get_issue_by_number", "get detailed information about a specific issue by number",
+	err = server.RegisterTool("get_issue", "get detailed information about a specific issue by number",
 		func(opt model.GetIssueByNumberOption) (*mcpgo.ToolResponse, error) {
 			issue, err := client.GetIssueByNumber(opt)
 			if err != nil {
@@ -280,8 +294,8 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RegisterTool("get_pull_request", "get detailed information about a specific pull request",
-		func(opt model.GetPROption) (*mcpgo.ToolResponse, error) {
+	err = server.RegisterTool("get_pull_request_by_number", "get detailed information about a specific pull request by number",
+		func(opt model.GetPullRequestByNumberOption) (*mcpgo.ToolResponse, error) {
 			pr, err := client.GetPullRequestByNumber(opt)
 			if err != nil {
 				return nil, err

@@ -124,7 +124,7 @@ type CommitInfo struct {
 	ParentCommitHash []string
 }
 
-type CommitBySHAOption struct {
+type GetCommitBySHAOption struct {
 	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
 	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
 	SHA        string `json:"sha" jsonschema:"required,description=the SHA hash of the commit"`
@@ -380,7 +380,7 @@ type ListPROption struct {
 	Page          int    `json:"page" jsonschema:"description=current page number, start from 1 and default to 1"`
 }
 
-type GetPROption struct {
+type GetPullRequestByNumberOption struct {
 	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
 	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
 	Number     int    `json:"number" jsonschema:"required,description=the pull request number"`

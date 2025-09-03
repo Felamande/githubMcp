@@ -298,7 +298,7 @@ func (c *GithubClient) ListCommits(opt model.CommitListOption) (*model.CommitLis
 	return result, nil
 }
 
-func (c *GithubClient) GetCommitBySHA(opt model.CommitBySHAOption) (*model.CommitInfo, error) {
+func (c *GithubClient) GetCommitBySHA(opt model.GetCommitBySHAOption) (*model.CommitInfo, error) {
 	ctx := context.Background()
 
 	commitResult, _, err := c.c.Repositories.GetCommit(ctx, opt.Owner, opt.Repository, opt.SHA, nil)
@@ -502,6 +502,33 @@ func (c *GithubClient) FindTags(opt model.FindTagsOption) (*model.FindTagsResult
 	}
 
 	return result, nil
+}
+
+func (c *GithubClient) GetTagByName(opt model.GetTagByNameOption) (*model.TagInfo, error) {
+	ctx := context.Background()
+
+	tags, _, err := c.c.Repositories.ListTags(ctx, opt.Owner, opt.Repository, &github.ListOptions{
+		PerPage: 100, // Get a reasonable number of tags to search through
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tag := range tags {
+		if tag.GetName() == opt.TagName {
+			tagInfo := &model.TagInfo{
+				Name:       tag.GetName(),
+				ZipballURL: tag.GetZipballURL(),
+				TarballURL: tag.GetTarballURL(),
+			}
+			if commit := tag.GetCommit(); commit != nil {
+				tagInfo.CommitSHA = commit.GetSHA()
+			}
+			return tagInfo, nil
+		}
+	}
+
+	return nil, fmt.Errorf("tag '%s' not found in repository %s/%s", opt.TagName, opt.Owner, opt.Repository)
 }
 
 func (c *GithubClient) FindBranches(opt model.FindBranchesOption) (*model.FindBranchesResult, error) {
@@ -1065,7 +1092,7 @@ func (c *GithubClient) ListPullRequests(opt model.ListPROption) (*model.PRListRe
 	return result, nil
 }
 
-func (c *GithubClient) GetPullRequestByNumber(opt model.GetPROption) (*model.PRInfo, error) {
+func (c *GithubClient) GetPullRequestByNumber(opt model.GetPullRequestByNumberOption) (*model.PRInfo, error) {
 	ctx := context.Background()
 
 	pr, _, err := c.c.PullRequests.Get(ctx, opt.Owner, opt.Repository, opt.Number)

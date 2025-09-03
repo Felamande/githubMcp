@@ -455,3 +455,23 @@ type CommitFileInfo struct {
 type CommitFilesResult struct {
 	Files []CommitFileInfo `json:"files"`
 }
+
+type CompareCommitsOption struct {
+	Owner      string `json:"owner" jsonschema:"required,description=owner of the repository"`
+	Repository string `json:"repository" jsonschema:"required,description=name of the repository"`
+	Base       string `json:"base" jsonschema:"required,description=base commit SHA or branch name"`
+	Head       string `json:"head" jsonschema:"required,description=head commit SHA or branch name"`
+}
+
+type CompareCommitsResult struct {
+	TotalCommits     int           `json:"total_commits"`
+	AheadBy          int           `json:"ahead_by"`
+	BehindBy         int           `json:"behind_by"`
+	Commits          []CommitInfo  `json:"commits"`
+	Files            []CommitFileInfo `json:"files"`
+	HTMLURL          string        `json:"html_url"`
+	PermalinkURL     string        `json:"permalink_url"`
+	DiffURL          string        `json:"diff_url"`
+	PatchURL         string        `json:"patch_url"`
+	Status           string        `json:"status"`
+}

@@ -1283,3 +1283,74 @@ func (c *GithubClient) SearchPullRequests(opt model.SearchPROption) (*model.PRLi
 
 	return searchResult, nil
 }
+
+func (c *GithubClient) CompareCommits(opt model.CompareCommitsOption) (*model.CompareCommitsResult, error) {
+	ctx := context.Background()
+
+	comparison, _, err := c.c.Repositories.CompareCommits(ctx, opt.Owner, opt.Repository, opt.Base, opt.Head, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &model.CompareCommitsResult{
+		TotalCommits: comparison.GetTotalCommits(),
+		AheadBy:      comparison.GetAheadBy(),
+		BehindBy:     comparison.GetBehindBy(),
+		HTMLURL:      comparison.GetHTMLURL(),
+		PermalinkURL: comparison.GetPermalinkURL(),
+		DiffURL:      comparison.GetDiffURL(),
+		PatchURL:     comparison.GetPatchURL(),
+		Status:       comparison.GetStatus(),
+		Commits:      make([]model.CommitInfo, 0),
+		Files:        make([]model.CommitFileInfo, 0),
+	}
+
+	// Process commits
+	for _, commit := range comparison.Commits {
+		commitInfo := model.CommitInfo{
+			SHA:              commit.GetSHA(),
+			URL:              commit.GetHTMLURL(),
+			ParentCommitHash: make([]string, 0),
+		}
+
+		if commit := commit.GetCommit(); commit != nil {
+			commitInfo.Message = commit.GetMessage()
+
+			if author := commit.GetAuthor(); author != nil {
+				commitInfo.Author = author.GetName()
+				commitInfo.AuthorEmail = author.GetEmail()
+				commitInfo.Date = author.GetDate().Format(time.RFC3339)
+			}
+			if committer := commit.GetCommitter(); committer != nil {
+				commitInfo.Committer = committer.GetName()
+				commitInfo.CommitterEmail = committer.GetEmail()
+			}
+		}
+
+		for _, parent := range commit.Parents {
+			commitInfo.ParentCommitHash = append(commitInfo.ParentCommitHash, parent.GetSHA())
+		}
+
+		result.Commits = append(result.Commits, commitInfo)
+	}
+
+	// Process files
+	for _, file := range comparison.Files {
+		fileInfo := model.CommitFileInfo{
+			SHA:              file.GetSHA(),
+			Filename:         file.GetFilename(),
+			Additions:        file.GetAdditions(),
+			Deletions:        file.GetDeletions(),
+			Changes:          file.GetChanges(),
+			Status:           file.GetStatus(),
+			Patch:            file.GetPatch(),
+			BlobURL:          file.GetBlobURL(),
+			RawURL:           file.GetRawURL(),
+			ContentsURL:      file.GetContentsURL(),
+			PreviousFilename: file.GetPreviousFilename(),
+		}
+		result.Files = append(result.Files, fileInfo)
+	}
+
+	return result, nil
+}
